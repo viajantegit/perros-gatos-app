@@ -88,7 +88,7 @@
     (async() => {
   try {
     console.log("Iniciando carga del modelo...");
-    modelo = await tf.loadLayersModel("model.json");
+    modelo = await tf.loadLayersModel("https://github.com/viajantegit/perros-gatos-app/edit/main/model.json");
     console.log("Modelo cargado exitosamente");
     // Intenta hacer una predicción de prueba
     const testTensor = tf.zeros([1, 100, 100, 1]);
