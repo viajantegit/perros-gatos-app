@@ -164,66 +164,55 @@
       setTimeout(procesarCamara, 20);
     }
 
-    function predecir() {
-  console.log("Iniciando función predecir");
-  if (modelo != null) {
-    try {
-      resample_single(canvas, 100, 100, otrocanvas);
+    async function predecir() {
+     if (modelo != null) {
+       try {
+         resample_single(canvas, 100, 100, otrocanvas);
 
-      var ctx2 = otrocanvas.getContext("2d");
-      var imgData = ctx2.getImageData(0,0, 100, 100);
+         var ctx2 = otrocanvas.getContext("2d");
+         var imgData = ctx2.getImageData(0,0, 100, 100);
 
-      var arr = [];
-      var arr100 = [];
+         var arr = [];
+         var arr100 = [];
 
-      for (var p=0; p < imgData.data.length; p+= 4) {
-        var rojo = imgData.data[p] / 255;
-        var verde = imgData.data[p+1] / 255;
-        var azul = imgData.data[p+2] / 255;
+         for (var p=0; p < imgData.data.length; p+= 4) {
+           var gris = (imgData.data[p] + imgData.data[p+1] + imgData.data[p+2]) / 3;
+           arr100.push([gris]);
+           if (arr100.length == 100) {
+             arr.push(arr100);
+             arr100 = [];
+           }
+         }
 
-        var gris = (rojo+verde+azul)/3;
+         arr = [arr];
 
-        arr100.push([gris]);
-        if (arr100.length == 100) {
-          arr.push(arr100);
-          arr100 = [];
-        }
-      }
+         var tensor = tf.tensor4d(arr);
+         var resultado = await modelo.predict(tensor).data();
 
-      arr = [arr];
+         console.log("Resultado de la predicción:", resultado);
 
-      var tensor = tf.tensor4d(arr);
-      var resultado = modelo.predict(tensor).dataSync();
+         var respuesta = resultado[0] <= 0.5 ? "Gato" : "Perro";
+         console.log("Predicción final:", respuesta);
+         
+         var elementoResultado = document.getElementById("resultado");
+         if (elementoResultado) {
+           elementoResultado.innerHTML = respuesta;
+           elementoResultado.style.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+         } else {
+           console.error("No se encontró el elemento con id 'resultado'");
+         }
+         
+         tensor.dispose();
+       } catch (error) {
+         console.error("Error en la función predecir:", error);
+       }
+     } else {
+       console.log("El modelo aún no está cargado");
+     }
 
-      console.log("Resultado de la predicción:", resultado);
-
-      var respuesta;
-      if (resultado <= .5) {
-        respuesta = "Gato";
-      } else {
-        respuesta = "Perro";
-      }
-      console.log("Predicción final:", respuesta);
-      
-      var elementoResultado = document.getElementById("resultado");
-      if (elementoResultado) {
-        elementoResultado.innerHTML = respuesta;
-        console.log("Elemento resultado actualizado con:", respuesta);
-        elementoResultado.style.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
-        console.log("Elemento resultado actualizado con:", respuesta);
-      } else {
-        console.error("No se encontró el elemento con id 'resultado'");
-      }
-      
-    } catch (error) {
-      console.error("Error en la función predecir:", error);
-    }
-  } else {
-    console.log("El modelo aún no está cargado");
-  }
-
-  setTimeout(predecir, 150);
-}
+     setTimeout(predecir, 150);
+   }
+   
     /**
        * Hermite resize - fast image resize/resample using Hermite filter. 1 cpu version!
        * 
